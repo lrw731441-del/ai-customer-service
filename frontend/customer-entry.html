@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Globex 全球购 — 在线客服</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0c1222 0%, #1a1d3a 30%, #162244 60%, #0d1b2a 100%);
+    display: flex; justify-content: center; align-items: center; min-height: 100vh;
+    overflow: hidden;
+  }
+  body::before {
+    content: ''; position: absolute; width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(22,119,255,0.12) 0%, transparent 70%);
+    top: -200px; right: -150px; border-radius: 50%; pointer-events: none;
+  }
+  body::after {
+    content: ''; position: absolute; width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(114,46,209,0.10) 0%, transparent 70%);
+    bottom: -100px; left: -100px; border-radius: 50%; pointer-events: none;
+  }
+  .entry-card {
+    background: rgba(255,255,255,0.97); padding: 44px 40px 36px;
+    border-radius: 20px; box-shadow: 0 24px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06);
+    width: 420px; max-width: 92vw; position: relative; z-index: 1;
+    backdrop-filter: blur(10px);
+  }
+  .entry-card .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+  .entry-card .logo {
+    width: 50px; height: 50px; background: linear-gradient(135deg, #1677ff, #0958d9);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 24px; box-shadow: 0 4px 12px rgba(22,119,255,0.3);
+  }
+  .entry-card h1 { font-size: 22px; color: #1a1a1a; font-weight: 700; letter-spacing: -0.3px; }
+  .entry-card p.subtitle { color: #999; font-size: 13px; margin-bottom: 28px; }
+  .features { display: flex; gap: 10px; margin-bottom: 26px; }
+  .feature-tag {
+    font-size: 11px; padding: 5px 10px; border-radius: 20px; font-weight: 500;
+    background: #f0f5ff; color: #1677ff; white-space: nowrap;
+  }
+  label { display: block; margin-bottom: 6px; font-size: 13px; color: #555; font-weight: 500; }
+  .input-wrap { position: relative; margin-bottom: 16px; }
+  .input-wrap .icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; color: #bbb; pointer-events: none;
+  }
+  input {
+    width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid #e8e8e8; border-radius: 10px;
+    font-size: 14px; transition: all 0.2s; background: #fafbfc;
+  }
+  input:focus { outline: none; border-color: #1677ff; background: white; box-shadow: 0 0 0 3px rgba(22,119,255,0.08); }
+  button {
+    width: 100%; padding: 13px; background: linear-gradient(135deg, #1677ff, #0958d9);
+    color: white; border: none; border-radius: 10px; font-size: 15px; cursor: pointer;
+    font-weight: 600; letter-spacing: 0.5px; transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(22,119,255,0.3);
+  }
+  button:hover { background: linear-gradient(135deg, #4096ff, #1677ff); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(22,119,255,0.4); }
+  button:disabled { background: #b8d4ff; box-shadow: none; cursor: not-allowed; transform: none; }
+  .error { background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; padding: 10px 14px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; display: none; }
+  .error.show { display: block; }
+  .footer-note { text-align: center; margin-top: 18px; font-size: 11px; color: #bbb; }
+</style>
+</head>
+<body>
+<div class="entry-card">
+  <div class="logo-row">
+    <div class="logo">G</div>
+    <h1>Globex 全球购</h1>
+  </div>
+  <p class="subtitle">AI 智能客服 · 无需注册，输入信息即可开始</p>
+  <div id="error" class="error"></div>
+  <form id="entryForm">
+    <label>您的姓名</label>
+    <div class="input-wrap">
+      <span class="icon">👤</span>
+      <input type="text" id="name" placeholder="请输入姓名" required autocomplete="name">
+    </div>
+    <label>手机号 / 订单号</label>
+    <div class="input-wrap">
+      <span class="icon">📱</span>
+      <input type="text" id="phone" placeholder="请输入手机号或订单号" required autocomplete="tel">
+    </div>
+    <button type="submit" id="submitBtn">开始咨询</button>
+  </form>
+  <div class="footer-note">安全加密 · 信息仅用于客服服务</div>
+</div>
+<script>
+document.getElementById('entryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const error = document.getElementById('error');
+  btn.disabled = true;
+  btn.textContent = '正在连接...';
+  error.classList.remove('show');
+
+  try {
+    const resp = await fetch('/api/v1/auth/customer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+      })
+    });
+    if (!resp.ok) {
+      const errData = await resp.json();
+      throw new Error(errData.detail || '连接失败，请稍后重试');
+    }
+    const data = await resp.json();
+    localStorage.setItem('customer_token', data.access_token);
+    localStorage.setItem('customer_id', data.customer_id);
+    localStorage.setItem('customer_name', data.customer_name);
+    localStorage.setItem('session_id', data.session_id);
+    window.location.href = '/static/index.html';
+  } catch (err) {
+    error.textContent = err.message;
+    error.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = '开始咨询';
+  }
+});
+</script>
+</body>
+</html>

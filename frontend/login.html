@@ -33,7 +33,7 @@
     })
     .then(r => r.ok ? r.json() : r.json().then(j => { throw new Error(j.detail || '登录失败') }))
     .then(data => {
-      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('admin_token', data.access_token);
       localStorage.setItem('role', data.role);
       window.location.href = '/static/admin.html';
     })

@@ -48,3 +48,16 @@ def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(securit
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Token 无效或已过期")
+
+
+def verify_customer_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """验证客户 Token，提取 customer_id 和 session_id"""
+    if credentials is None:
+        raise HTTPException(status_code=401, detail="请先进行身份认证")
+    try:
+        payload = jwt.decode(credentials.credentials, API_TOKEN_SECRET, algorithms=["HS256"])
+        if payload.get("type") != "customer":
+            raise HTTPException(status_code=403, detail="无效的客户凭证")
+        return payload
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token 无效或已过期")

@@ -1,16 +1,17 @@
 import time
-from sqlmodel import Session, select
+from sqlmodel import select
 
 from app.agent.graph import run_agent
-from app.models.database import Message, Ticket, AuditLog
+from app.models.database import Message, Ticket, AuditLog, TicketReply
 
 
 def process_chat(
     user_message: str,
     session_id: str,
+    customer_id: int,
     ip_address: str,
     user_agent: str,
-    db: Session,
+    db,
 ) -> dict:
     """处理单次对话：执行 Agent + 写入数据库 + 写入日志"""
 
@@ -44,20 +45,49 @@ def process_chat(
     # 4. 处理工单创建
     ticket = None
     if result["create_ticket"]:
-        ticket = Ticket(
-            session_id=session_id,
-            user_message=user_message,
-            intent=result["intent"],
-            emotion=result["emotion"],
-            priority=result["ticket_priority"],
-            status="pending",
-            ai_reply_draft=result["ai_reply"],
-        )
-        db.add(ticket)
-        db.flush()
+        # 先查该会话是否已有未关闭的工单，有则复用
+        existing = db.exec(
+            select(Ticket)
+            .where(Ticket.session_id == session_id)
+            .where(Ticket.status.in_(["pending", "processing"]))
+            .order_by(Ticket.created_at.desc())
+            .limit(1)
+        ).first()
 
-        # 关联用户消息到工单
+        if existing:
+            ticket = existing
+            # 复用工单时，加一条客户追问记录
+            customer_reply = TicketReply(ticket_id=ticket.id, sender="customer", content=user_message)
+            db.add(customer_reply)
+            if ticket.status == "resolved":
+                ticket.status = "processing"
+                ticket.resolved_at = None
+                db.add(ticket)
+        else:
+            ticket = Ticket(
+                session_id=session_id,
+                customer_id=customer_id,
+                user_message=user_message,
+                intent=result["intent"],
+                emotion=result["emotion"],
+                priority=result["ticket_priority"],
+                status="pending",
+                ai_reply_draft=result["ai_reply"],
+            )
+            db.add(ticket)
+            db.flush()
+            # 加一条 AI 草稿记录
+            ai_reply_record = TicketReply(ticket_id=ticket.id, sender="ai", content=result["ai_reply"])
+            db.add(ai_reply_record)
+
         user_msg.ticket_id = ticket.id
+
+    # 更新会话标题（首条消息）
+    from app.models.database import Session_ as DBSession
+    db_session = db.get(DBSession, session_id)
+    if db_session and db_session.title == "新对话":
+        db_session.title = user_message[:30]
+        db.add(db_session)
 
     # 5. 保存 AI 回复消息
     assistant_msg = Message(

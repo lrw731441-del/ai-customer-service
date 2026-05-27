@@ -80,7 +80,7 @@ def search_similar(query: str, top_k: int = 5) -> List[Dict[str, str]]:
             if results["distances"] and results["distances"][0] and i < len(results["distances"][0]):
                 distance = results["distances"][0][i]
             similarity = 1 - distance if distance else 0
-            if similarity >= 0.15:
+            if similarity >= 0.10:
                 docs.append({"content": doc, "source": source, "similarity": similarity})
 
     return docs

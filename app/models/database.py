@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field, create_engine, Session as SqlSession
 
 from app.config import DATABASE_URL
 
@@ -8,7 +8,7 @@ engine = create_engine(DATABASE_URL, echo=False, connect_args={"check_same_threa
 
 
 def get_session():
-    with Session(engine) as session:
+    with SqlSession(engine) as session:
         yield session
 
 
@@ -33,6 +33,7 @@ class Message(SQLModel, table=True):
 class Ticket(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     session_id: str = Field(index=True)
+    customer_id: Optional[int] = Field(default=None, foreign_key="customer.id", index=True)
     user_message: str
     intent: str
     emotion: str
@@ -80,4 +81,31 @@ class KnowledgeDocument(SQLModel, table=True):
     file_size: int
     chunk_count: int = Field(default=0)
     status: str = Field(default="processing")  # processing / ready / error
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# --- 客户表 ---
+class Customer(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    phone: str = Field(unique=True, index=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# --- 服务端会话表 ---
+class Session_(SQLModel, table=True):
+    __tablename__ = "session"
+    id: str = Field(primary_key=True)
+    customer_id: int = Field(foreign_key="customer.id", index=True)
+    title: str = Field(default="新对话")
+    status: str = Field(default="active")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# --- 工单回复表 ---
+class TicketReply(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    ticket_id: int = Field(foreign_key="ticket.id", index=True)
+    sender: str  # "admin" / "customer" / "ai"
+    content: str
     created_at: datetime = Field(default_factory=datetime.utcnow)

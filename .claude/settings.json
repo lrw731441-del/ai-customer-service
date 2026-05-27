@@ -106,7 +106,28 @@
       "Bash(HF_ENDPOINT=https://hf-mirror.com /c/Users/31992/AppData/Local/Programs/Python/Python312/python -c ' *)",
       "Bash(HF_ENDPOINT=https://hf-mirror.com /c/Users/31992/AppData/Local/Programs/Python/Python312/python seed_data.py)",
       "Bash(taskkill //F //PID 4012)",
-      "Bash(HF_ENDPOINT=https://hf-mirror.com /c/Users/31992/AppData/Local/Programs/Python/Python312/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000)"
+      "Bash(HF_ENDPOINT=https://hf-mirror.com /c/Users/31992/AppData/Local/Programs/Python/Python312/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000)",
+      "Bash(taskkill //F //PID 11076)",
+      "Bash(C:/Users/31992/AppData/Local/Programs/Python/Python312/python -c \"from app.api.chat import router; print\\('Backend OK'\\)\")",
+      "Bash(C:/Users/31992/AppData/Local/Programs/Python/Python312/python -c \"from app.models.database import *; init_db\\(\\); print\\('OK'\\)\")",
+      "Bash(C:/Users/31992/AppData/Local/Programs/Python/Python312/python -c \"from app.main import app; print\\('Backend OK, routes:', len\\(app.routes\\)\\)\")",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(C:/Users/31992/AppData/Local/Programs/Python/Python312/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload)",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/auth/admin -H \"Content-Type: application/json\" -d \"{\\\\\"username\\\\\":\\\\\"admin\\\\\",\\\\\"password\\\\\":\\\\\"admin123\\\\\"}\")",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/login -H \"Content-Type: application/json\" -d \"{\\\\\"username\\\\\":\\\\\"admin\\\\\",\\\\\"password\\\\\":\\\\\"admin123\\\\\"}\")",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"username\\\\\":\\\\\"admin\\\\\",\\\\\"password\\\\\":\\\\\"admin123\\\\\"}\")",
+      "Bash(curl -s -X POST http://localhost:8000/api/v1/auth/customer -H \"Content-Type: application/json\" -d \"{\\\\\"name\\\\\":\\\\\"测试张三\\\\\",\\\\\"phone\\\\\":\\\\\"13800001111\\\\\"}\")",
+      "Bash(curl -s -X POST \"http://localhost:8000/api/v1/auth/customer\" -H \"Content-Type: application/json; charset=utf-8\" -d '{\"name\":\"TestUser\",\"phone\":\"13800001111\"}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/static/index.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8000/static/admin.html)",
+      "Bash(curl -s -X POST \"http://localhost:8000/api/v1/auth/login\" -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"admin123\"}' > /tmp/admin_login.json 2>&1 ; cat /tmp/admin_login.json)",
+      "Bash(C:/Users/31992/AppData/Local/Programs/Python/Python312/python -c ' *)",
+      "Bash(python \\\\tmp\\\\fix_admin.py)",
+      "Bash(sed -i '90s|x-text=\"statusLabel\\(t.status\\)\"></span></td>|x-text=\"statusLabel\\(t.status\\)\" style=\"display:inline-block;min-width:72px;text-align:center\"></span></td>|' admin.html)",
+      "Bash(sed -n '90p' admin.html)"
+    ],
+    "additionalDirectories": [
+      "\\tmp"
     ]
   }
 }

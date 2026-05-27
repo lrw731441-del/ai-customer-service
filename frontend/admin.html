@@ -15,16 +15,59 @@
   .sidebar a:hover, .sidebar a.active { background: #1677ff; color: white; }
   .main { flex: 1; overflow-y: auto; padding: 24px; }
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-  table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-  th { background: #fafafa; font-weight: 600; }
-  .priority-urgent { color: #ff4d4f; font-weight: 600; }
-  .priority-high { color: #fa8c16; font-weight: 600; }
-  .status-pending { background: #fff7e6; color: #d48806; padding: 2px 8px; border-radius: 4px; }
-  .status-resolved { background: #f6ffed; color: #52c41a; padding: 2px 8px; border-radius: 4px; }
-  button { padding: 6px 16px; border: 1px solid #ddd; border-radius: 4px; background: white; cursor: pointer; font-size: 13px; }
+  .table-card { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th { padding: 15px 18px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; font-weight: 500; color: #888; background: white; }
+  td { padding: 16px 18px; border-bottom: 1px solid #f5f5f5; font-size: 14px; color: #333; }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: #f8faff; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* ===== Priority ===== */
+  .priority-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .priority-urgent .priority-dot { background: #ff4d4f; }
+  .priority-urgent { color: #ff4d4f; font-weight: 500; }
+  .priority-high .priority-dot { background: #fa8c16; }
+  .priority-high { color: #fa8c16; font-weight: 500; }
+  .priority-medium .priority-dot { background: #1677ff; }
+  .priority-medium { color: #1677ff; font-weight: 500; }
+  .priority-low .priority-dot { background: #bbb; }
+  .priority-low { color: #bbb; font-weight: 500; }
+
+  /* ===== Status ===== */
+  .status-tag { display: inline-block; padding: 3px 12px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+  .status-pending { background: #fffbe6; color: #ad6800; }
+  .status-processing { background: #e6f4ff; color: #1677ff; }
+  .status-resolved { background: #f0fdf4; color: #15803d; }
+  .status-closed { background: #f5f5f5; color: #999; }
+
+  /* ===== Buttons ===== */
+  button { padding: 6px 16px; border: 1px solid #ddd; border-radius: 6px; background: white; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+  button:hover { border-color: #1677ff; color: #1677ff; }
   button.primary { background: #1677ff; color: white; border-color: #1677ff; }
-  textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; min-height: 80px; }
+  button.primary:hover { background: #4096ff; }
+  button.primary:disabled { background: #91caff; border-color: #91caff; cursor: not-allowed; }
+  button.success { background: #52c41a; color: white; border-color: #52c41a; }
+  button.success:hover { background: #73d13d; }
+  button.danger { background: #ff4d4f; color: white; border-color: #ff4d4f; }
+  textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; min-height: 80px; resize: vertical; }
+
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal-box { background: white; border-radius: 12px; width: 700px; max-width: 95vw; max-height: 85vh; display: flex; flex-direction: column; }
+  .modal-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h3 { font-size: 16px; }
+  .modal-info { padding: 10px 20px; background: #fafafa; font-size: 12px; color: #666; border-bottom: 1px solid #eee; }
+  .modal-conversation { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; min-height: 200px; max-height: 350px; }
+  .conv-item { max-width: 85%; padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.5; }
+  .conv-item.customer { align-self: flex-end; background: #1677ff; color: white; border-bottom-right-radius: 4px; }
+  .conv-item.ai { align-self: flex-start; background: #fffbe6; border: 1px solid #ffe58f; border-bottom-left-radius: 4px; }
+  .conv-item.admin { align-self: flex-start; background: #f6ffed; border: 1px solid #b7eb8f; border-bottom-left-radius: 4px; }
+  .conv-item .sender-label { font-size: 10px; font-weight: 600; margin-bottom: 4px; opacity: 0.8; }
+  .conv-item .conv-time { font-size: 10px; opacity: 0.6; margin-top: 4px; text-align: right; }
+  .modal-input { padding: 12px 20px; border-top: 1px solid #eee; display: flex; gap: 8px; align-items: flex-end; }
+  .modal-input textarea { min-height: 50px; flex: 1; }
+  .modal-input .actions { display: flex; flex-direction: column; gap: 6px; }
+  .empty-conv { text-align: center; color: #aaa; padding: 40px; font-size: 13px; }
 </style>
 </head>
 <body x-data="adminApp()" x-init="checkAuth()">
@@ -42,48 +85,81 @@
         <option value="">全部状态</option>
         <option value="pending">待处理</option>
         <option value="processing">处理中</option>
-        <option value="resolved">已解决</option>
-        <option value="closed">已关闭</option>
+        <option value="resolved">客服已解决</option>
+        <option value="closed">客户已确认</option>
       </select>
     </div>
+    <div class="table-card">
     <table>
       <thead>
         <tr>
-          <th>ID</th><th>意图</th><th>情绪</th><th>优先级</th><th>状态</th><th>AI 回复草稿</th><th>操作</th>
+          <th style="width:55px">ID</th><th>客户</th><th>意图</th><th>情绪</th><th>优先级</th><th>状态</th><th>AI 回复草稿</th><th style="width:195px">操作</th>
         </tr>
       </thead>
       <tbody>
         <template x-for="t in tickets" :key="t.id">
           <tr>
-            <td x-text="'#' + t.id"></td>
+            <td style="font-weight:600;color:#1677ff" x-text="'#' + t.id"></td>
+            <td>
+              <div style="font-weight:500" x-text="t.customer_name || '-'"></div>
+              <div style="font-size:12px;color:#bbb;margin-top:2px" x-text="t.customer_phone || ''"></div>
+            </td>
             <td x-text="t.intent"></td>
             <td x-text="t.emotion"></td>
             <td>
-              <span :class="'priority-' + t.priority" x-text="t.priority"></span>
+              <span :class="'priority-' + t.priority">
+                <span class="priority-dot"></span><span x-text="priorityLabel(t.priority)"></span>
+              </span>
             </td>
-            <td><span :class="'status-' + t.status" x-text="t.status"></span></td>
-            <td style="max-width:300px" x-text="t.ai_reply_draft?.substring(0,80)"></td>
+            <td><span class="status-tag" :class="'status-' + t.status" x-text="statusLabel(t.status)"></span></td>
+            <td style="color:#aaa;font-size:13px" x-text="t.ai_reply_draft?.substring(0,60) || '-'"></td>
             <td>
-              <button @click="openDetail(t)" style="margin-right:4px">详情</button>
-              <button class="primary" @click="resolveTicket(t.id)" x-show="t.status !== 'resolved'">解决</button>
+              <button @click="openDetail(t)" style="margin-right:8px">详情</button>
+              <button class="primary" @click="resolveTicket(t.id)" :disabled="t.status === 'resolved' || t.status === 'closed' || resolvingId === t.id" :style="{ minWidth: '76px', marginLeft: '8px', opacity: t.status === 'resolved' || t.status === 'closed' ? '0.5' : '1', cursor: t.status === 'resolved' || t.status === 'closed' ? 'not-allowed' : '' }" x-text="resolveBtnText(t)"></button>
             </td>
           </tr>
         </template>
       </tbody>
     </table>
+    </div>
 
-    <div x-show="detail" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center" @click.self="detail=null">
-      <div style="background:white;border-radius:12px;padding:24px;width:600px;max-width:90vw;max-height:80vh;overflow-y:auto">
-        <h3 x-text="'工单 #'+detail.id"></h3>
-        <p><strong>用户消息：</strong><span x-text="detail.user_message"></span></p>
-        <p><strong>意图：</strong><span x-text="detail.intent"></span> | <strong>情绪：</strong><span x-text="detail.emotion"></span> | <strong>优先级：</strong><span x-text="detail.priority"></span></p>
-        <p><strong>AI 草稿：</strong></p>
-        <textarea x-model="detail.ai_reply_draft"></textarea>
-        <p style="margin-top:8px"><strong>最终回复：</strong></p>
-        <textarea x-model="detail.final_reply"></textarea>
-        <div style="margin-top:16px;display:flex;gap:8px">
-          <button class="primary" @click="saveDetail()">保存</button>
-          <button @click="detail=null">关闭</button>
+    <!-- 详情弹窗 -->
+    <div class="modal-overlay" x-show="detail" @click.self="detail=null">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>
+            <span x-text="'工单 #' + detail.id"></span>
+            <span :class="'status-' + detail.status" x-text="statusLabel(detail.status)" x-show="detail.status"></span>
+          </h3>
+          <button @click="detail=null">✕</button>
+        </div>
+        <div class="modal-info">
+          <span>客户：</span><strong x-text="detail.customer_name || '-'"></strong>
+          &nbsp;|&nbsp;<span x-text="detail.customer_phone || ''"></span>
+          &nbsp;|&nbsp;<span>意图：</span><span x-text="detail.intent"></span>
+          &nbsp;|&nbsp;<span>优先级：</span><span x-text="detail.priority"></span>
+        </div>
+
+        <div class="modal-conversation" x-ref="convList">
+          <template x-for="item in conversation" :key="item._key">
+            <div class="conv-item" :class="item._type">
+              <div class="sender-label" x-text="senderLabel(item._type)"></div>
+              <div x-text="item.content"></div>
+              <div class="conv-time" x-text="item.created_at?.substring(0, 16)"></div>
+            </div>
+          </template>
+          <div class="empty-conv" x-show="conversation.length === 0">暂无对话记录</div>
+        </div>
+
+        <div class="modal-input" x-show="detail.status !== 'closed'">
+          <textarea x-model="replyInput" placeholder="输入回复内容..." rows="2"></textarea>
+          <div class="actions">
+            <button class="primary" @click="sendReply()">发送</button>
+            <button class="success" @click="resolveTicket(detail.id)" x-show="detail.status === 'pending' || detail.status === 'processing'">标记解决</button>
+          </div>
+        </div>
+        <div style="padding:12px 20px;text-align:center;color:#8c8c8c;font-size:13px;border-top:1px solid #eee" x-show="detail.status === 'closed'">
+          此工单已被客户确认解决
         </div>
       </div>
     </div>
@@ -95,12 +171,37 @@ function adminApp() {
   return {
     authed: false,
     tickets: [],
+    resolvingId: null,
     statusFilter: '',
     detail: null,
+    conversation: [],
+    replyInput: '',
     token: '',
 
+    statusLabel(s) {
+      const map = { pending: '待处理', processing: '处理中', resolved: '客服已解决', closed: '客户已确认' };
+      return map[s] || s || '';
+    },
+
+    priorityLabel(p) {
+      const map = { urgent: '紧急', high: '高', medium: '中', low: '低' };
+      return map[p] || p || '';
+    },
+
+    senderLabel(t) {
+      const map = { customer: '客户', ai: 'AI 建议回复', admin: '客服回复' };
+      return map[t] || t;
+    },
+
+    resolveBtnText(t) {
+      if (this.resolvingId === t.id) return '处理中...';
+      if (t.status === 'resolved') return '已解决';
+      if (t.status === 'closed') return '已确认';
+      return '解决';
+    },
+
     checkAuth() {
-      this.token = localStorage.getItem('token');
+      this.token = localStorage.getItem('admin_token');
       if (!this.token) { window.location.href = '/static/login.html'; return; }
       this.authed = true;
       this.loadTickets();
@@ -114,30 +215,98 @@ function adminApp() {
       this.tickets = data.items || [];
     },
 
-    openDetail(t) { this.detail = { ...t }; },
+    async openDetail(t) {
+      this.detail = { ...t };
+      this.conversation = [];
+      this.replyInput = '';
 
-    async saveDetail() {
-      await fetch('/api/v1/tickets/' + this.detail.id, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
-        body: JSON.stringify({
-          final_reply: this.detail.final_reply,
-        })
+      // 加载工单回复
+      const repliesResp = await fetch('/api/v1/tickets/' + t.id + '/replies', {
+        headers: { 'Authorization': 'Bearer ' + this.token }
       });
-      this.detail = null;
-      this.loadTickets();
+      if (repliesResp.ok) {
+        const repliesData = await repliesResp.json();
+        for (const r of (repliesData.replies || [])) {
+          this.conversation.push({
+            _key: 'r_' + r.id, _type: r.sender,
+            content: r.content, created_at: r.created_at,
+          });
+        }
+      }
+
+      // 也加载会话消息
+      try {
+        const msgResp = await fetch('/api/v1/admin/sessions/' + t.session_id + '/messages', {
+          headers: { 'Authorization': 'Bearer ' + this.token }
+        });
+        if (msgResp.ok) {
+          const msgData = await msgResp.json();
+          for (const m of (msgData.messages || [])) {
+            this.conversation.push({
+              _key: 'm_' + m.id, _type: m.role === 'user' ? 'customer' : 'ai',
+              content: m.content, created_at: m.created_at,
+            });
+          }
+        }
+      } catch (e) {}
+
+      // 按时间排序
+      this.conversation.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+
+      this.$nextTick(() => {
+        const el = this.$refs.convList;
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    },
+
+    async sendReply() {
+      if (!this.replyInput.trim()) return;
+      const content = this.replyInput.trim();
+      this.replyInput = '';
+
+      const resp = await fetch('/api/v1/tickets/' + this.detail.id + '/replies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+        body: JSON.stringify({ content })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        this.conversation.push({
+          _key: 'r_' + data.id, _type: 'admin',
+          content: content, created_at: data.created_at,
+        });
+        // 更新本地状态
+        if (this.detail.status === 'pending') {
+          this.detail.status = 'processing';
+        }
+        this.$nextTick(() => {
+          const el = this.$refs.convList;
+          if (el) el.scrollTop = el.scrollHeight;
+        });
+        this.loadTickets();
+      }
     },
 
     async resolveTicket(id) {
-      await fetch('/api/v1/tickets/' + id, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
-        body: JSON.stringify({ status: 'resolved' })
-      });
-      this.loadTickets();
+      this.resolvingId = id;
+      try {
+        await fetch('/api/v1/tickets/' + id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+          body: JSON.stringify({ status: 'resolved' })
+        });
+        if (this.detail && this.detail.id === id) {
+          this.detail.status = 'resolved';
+        }
+        // 乐观更新列表中的状态
+        const ticket = this.tickets.find(t => t.id === id);
+        if (ticket) ticket.status = 'resolved';
+      } finally {
+        this.resolvingId = null;
+      }
     },
 
-    logout() { localStorage.clear(); window.location.href = '/static/login.html'; }
+    logout() { localStorage.removeItem('admin_token'); localStorage.removeItem('role'); window.location.href = '/static/login.html'; }
   }
 }
 </script>

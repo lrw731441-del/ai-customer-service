@@ -28,12 +28,37 @@ def detect_intent_and_emotion(state: Dict[str, Any]) -> Dict[str, Any]:
         return {"intent": "其他", "emotion": "平静"}
 
 
+def rewrite_query(user_message: str) -> str:
+    """将模糊短句扩展为搜索关键词，提升向量检索召回率"""
+    if len(user_message) >= 20:
+        return user_message
+    try:
+        resp = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{
+                "role": "user",
+                "content": (
+                    "把以下用户消息扩展为用于搜索知识库的关键词短语。"
+                    "不要加解释，直接输出关键词，用空格分隔：\n"
+                    + user_message
+                ),
+            }],
+            temperature=0.1,
+            max_tokens=60,
+        )
+        expanded = resp.choices[0].message.content.strip()
+        return expanded if expanded else user_message
+    except Exception:
+        return user_message
+
+
 def retrieve_knowledge(state: Dict[str, Any]) -> Dict[str, Any]:
-    """Node 2: RAG 检索"""
+    """Node 2: RAG 检索（含查询重写）"""
     from app.rag.vectordb import search_similar
 
     user_message = state["user_message"]
-    docs = search_similar(user_message, top_k=5)
+    search_query = rewrite_query(user_message)
+    docs = search_similar(search_query, top_k=8)
 
     return {"retrieved_docs": docs}
 
@@ -54,7 +79,7 @@ def generate_reply_and_route(state: Dict[str, Any]) -> Dict[str, Any]:
     else:
         docs_text = "（知识库中暂无相关内容）"
 
-    # 愤怒/紧急/转人工 → 直接建单，不需要检索结果
+    # 愤怒/紧急/要求转人工 → 直接建单
     if emotion in ("愤怒", "紧急") or intent == "要求转人工":
         priority = "urgent" if emotion == "紧急" else "high"
         reply = "非常抱歉给您带来不便，我已收到您的反馈，正在为您创建优先处理工单，客服专员将尽快与您联系。"
@@ -74,8 +99,7 @@ def generate_reply_and_route(state: Dict[str, Any]) -> Dict[str, Any]:
                 temperature=0.3,
                 max_tokens=500,
             )
-            result = json.loads(response.choices[0].message.content.strip())
-            reply = result.get("reply", reply)
+            reply = response.choices[0].message.content.strip()
         except Exception:
             pass
 
@@ -85,7 +109,7 @@ def generate_reply_and_route(state: Dict[str, Any]) -> Dict[str, Any]:
             "ticket_priority": priority,
         }
 
-    # 正常流程
+    # 正常流程：有知识库匹配 → AI 直接答，不建单；无匹配 → 建单转人工
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -101,15 +125,21 @@ def generate_reply_and_route(state: Dict[str, Any]) -> Dict[str, Any]:
             temperature=0.3,
             max_tokens=500,
         )
-        result = json.loads(response.choices[0].message.content.strip())
-        return {
-            "ai_reply": result.get("reply", FALLBACK_REPLY),
-            "create_ticket": result.get("create_ticket", False),
-            "ticket_priority": result.get("ticket_priority", "low"),
-        }
+        reply = response.choices[0].message.content.strip()
     except Exception:
+        reply = FALLBACK_REPLY
+
+    # RAG 检索结果决定是否建工单
+    has_knowledge = len(retrieved_docs) > 0
+    if has_knowledge:
         return {
-            "ai_reply": FALLBACK_REPLY,
+            "ai_reply": reply,
+            "create_ticket": False,
+            "ticket_priority": "low",
+        }
+    else:
+        return {
+            "ai_reply": reply,
             "create_ticket": True,
             "ticket_priority": "medium",
         }
