@@ -1,6 +1,4 @@
 """评测脚本：使用 50 条标注数据评测 Agent 性能"""
-import json
-import time
 from app.agent.nodes import detect_intent_and_emotion
 
 # 50 条标注测试数据：[用户消息, 期望意图, 期望情绪, 是否应建工单]

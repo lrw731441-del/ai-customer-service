@@ -62,7 +62,10 @@ def import_knowledge_base():
                 doc.status = "ready"
             except Exception as e:
                 doc.status = "error"
+                session.add(doc)
+                session.commit()
                 print(f"  导入 {filename} 失败: {e}")
+                continue
 
             session.add(doc)
             session.commit()
