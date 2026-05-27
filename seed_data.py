@@ -1,6 +1,6 @@
 """初始化种子数据：创建管理员账户 + 导入知识库文件"""
 import os
-from passlib.hash import bcrypt
+import bcrypt
 from sqlmodel import Session, select
 
 from app.models.database import engine, AdminUser, KnowledgeDocument
@@ -12,7 +12,7 @@ from app.rag.vectordb import add_documents
 def create_admin():
     username = os.getenv("ADMIN_USERNAME", "admin")
     password = os.getenv("ADMIN_PASSWORD", "admin123")
-    password_hash = bcrypt.hash(password)
+    password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
     with Session(engine) as session:
         existing = session.exec(
