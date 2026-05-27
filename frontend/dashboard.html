@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Globex 数据看板</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+  .layout { display: flex; height: 100vh; }
+  .sidebar { width: 200px; background: #001529; color: white; padding: 20px 0; }
+  .sidebar h3 { padding: 0 20px 20px; font-size: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar a { display: block; padding: 12px 20px; color: rgba(255,255,255,0.65); text-decoration: none; font-size: 14px; }
+  .sidebar a:hover, .sidebar a.active { background: #1677ff; color: white; }
+  .main { flex: 1; overflow-y: auto; padding: 24px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: white; padding: 20px; border-radius: 8px; text-align: center; }
+  .stat-card .value { font-size: 28px; font-weight: 700; color: #1a1a1a; }
+  .stat-card .label { font-size: 13px; color: #888; margin-top: 4px; }
+  .stat-card .value.green { color: #52c41a; }
+  .stat-card .value.blue { color: #1677ff; }
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .chart-box { background: white; padding: 20px; border-radius: 8px; }
+  .chart-box h4 { margin-bottom: 12px; font-size: 14px; color: #333; }
+</style>
+</head>
+<body x-data="dashboardApp()" x-init="checkAuth()">
+<div class="layout" x-show="authed">
+  <div class="sidebar">
+    <h3>Globex 后台</h3>
+    <a href="/static/admin.html">工单审核</a>
+    <a href="#" class="active">数据看板</a>
+    <a href="#" @click.prevent="logout()">退出登录</a>
+  </div>
+  <div class="main">
+    <h2 style="margin-bottom:20px">数据看板</h2>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="value blue" x-text="stats.today?.total_messages || 0"></div><div class="label">今日对话</div></div>
+      <div class="stat-card"><div class="value" x-text="stats.today?.total_tickets || 0"></div><div class="label">今日工单</div></div>
+      <div class="stat-card"><div class="value green" x-text="stats.today?.ai_resolved || 0"></div><div class="label">AI 解决</div></div>
+      <div class="stat-card"><div class="value green" x-text="(stats.today?.ai_resolve_rate || 0) + '%'"></div><div class="label">解决率</div></div>
+      <div class="stat-card"><div class="value blue" x-text="(stats.today?.avg_response_time_ms || 0) + 'ms'"></div><div class="label">平均响应</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-box"><h4>意图分布</h4><canvas id="intentChart"></canvas></div>
+      <div class="chart-box"><h4>情绪分布</h4><canvas id="emotionChart"></canvas></div>
+    </div>
+    <div style="background:white;padding:20px;border-radius:8px">
+      <h4 style="margin-bottom:12px">高频问题 Top 10</h4>
+      <canvas id="topIssuesChart" style="max-height:250px"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+function dashboardApp() {
+  return {
+    authed: false, token: '', stats: {},
+
+    checkAuth() {
+      this.token = localStorage.getItem('token');
+      if (!this.token) { window.location.href = '/static/login.html'; return; }
+      this.authed = true;
+      this.loadStats();
+    },
+
+    async loadStats() {
+      const resp = await fetch('/api/v1/dashboard/stats', { headers: { 'Authorization': 'Bearer ' + this.token } });
+      this.stats = await resp.json();
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    renderCharts() {
+      const colors = ['#1677ff','#52c41a','#fa8c16','#ff4d4f','#722ed1','#13c2c2'];
+
+      const intentData = this.stats.intent_distribution || [];
+      new Chart(document.getElementById('intentChart'), {
+        type: 'pie',
+        data: { labels: intentData.map(d => d.name), datasets: [{ data: intentData.map(d => d.count), backgroundColor: colors }] },
+      });
+
+      const emotionData = this.stats.emotion_distribution || [];
+      new Chart(document.getElementById('emotionChart'), {
+        type: 'pie',
+        data: { labels: emotionData.map(d => d.name), datasets: [{ data: emotionData.map(d => d.count), backgroundColor: ['#52c41a','#faad14','#ff7a45','#ff4d4f'] }] },
+      });
+
+      const topData = this.stats.top_issues || [];
+      new Chart(document.getElementById('topIssuesChart'), {
+        type: 'bar',
+        data: { labels: topData.map(d => d.name), datasets: [{ label: '次数', data: topData.map(d => d.count), backgroundColor: '#1677ff' }] },
+        options: { indexAxis: 'y', plugins: { legend: { display: false } } }
+      });
+    },
+
+    logout() { localStorage.clear(); window.location.href = '/static/login.html'; }
+  }
+}
+</script>
+</body>
+</html>

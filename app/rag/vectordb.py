@@ -1,4 +1,3 @@
-import os
 import uuid
 from typing import List, Dict
 import chromadb
@@ -6,15 +5,27 @@ from sentence_transformers import SentenceTransformer
 
 from app.config import CHROMA_PERSIST_DIR
 
-os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+import os as _os
 
 _embedding_model = None
+_MODEL_NAME = "shibing624/text2vec-base-chinese"
 
 
 def _get_model():
     global _embedding_model
     if _embedding_model is None:
-        _embedding_model = SentenceTransformer("shibing624/text2vec-base-chinese")
+        # Try to resolve from local cache to avoid network calls
+        cache_dir = _os.path.expanduser(
+            "~/.cache/huggingface/hub/models--shibing624--text2vec-base-chinese/snapshots"
+        )
+        model_path = None
+        if _os.path.isdir(cache_dir):
+            snapshots = sorted(_os.listdir(cache_dir), reverse=True)
+            if snapshots:
+                model_path = _os.path.join(cache_dir, snapshots[0])
+        _embedding_model = SentenceTransformer(
+            model_path if model_path else _MODEL_NAME
+        )
     return _embedding_model
 
 _chroma_client = chromadb.PersistentClient(
@@ -31,8 +42,11 @@ def get_collection():
 
 
 def embed_text(text: str) -> List[float]:
-    """本地向量化"""
-    return _get_model().encode(text).tolist()
+    """本地向量化（L2 归一化）"""
+    import numpy as np
+    vec = _get_model().encode(text)
+    vec = vec / np.linalg.norm(vec)
+    return vec.tolist()
 
 
 def add_documents(chunks: List[Dict[str, str]]) -> int:
@@ -66,7 +80,7 @@ def search_similar(query: str, top_k: int = 5) -> List[Dict[str, str]]:
             if results["distances"] and results["distances"][0] and i < len(results["distances"][0]):
                 distance = results["distances"][0][i]
             similarity = 1 - distance if distance else 0
-            if similarity >= 0.7:
+            if similarity >= 0.15:
                 docs.append({"content": doc, "source": source, "similarity": similarity})
 
     return docs

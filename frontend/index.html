@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Globex 全球购 — 在线客服</title>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; }
+  .chat-container { max-width: 720px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column; background: white; }
+  .chat-header { padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 12px; }
+  .chat-header .logo { width: 40px; height: 40px; background: #1677ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 18px; }
+  .chat-header h2 { font-size: 16px; color: #1a1a1a; }
+  .chat-header span { font-size: 12px; color: #52c41a; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; word-wrap: break-word; }
+  .msg.user { align-self: flex-end; background: #1677ff; color: white; border-bottom-right-radius: 4px; }
+  .msg.assistant { align-self: flex-start; background: #f0f2f5; color: #333; border-bottom-left-radius: 4px; }
+  .msg .meta { font-size: 11px; margin-top: 6px; opacity: 0.7; }
+  .ticket-badge { display: inline-block; background: #fff7e6; color: #d48806; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-top: 6px; }
+  .chat-input { padding: 16px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+  .chat-input input { flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 20px; font-size: 14px; outline: none; }
+  .chat-input input:focus { border-color: #1677ff; }
+  .chat-input button { padding: 10px 20px; background: #1677ff; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 14px; }
+  .chat-input button:hover { background: #4096ff; }
+  .loading-dots { display: flex; gap: 4px; padding: 12px 16px; }
+  .loading-dots span { width: 8px; height: 8px; background: #bbb; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+  .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+  .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+</style>
+</head>
+<body x-data="chatApp()" x-init="init()">
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="logo">G</div>
+    <div><h2>Globex 全球购</h2><span>在线客服 · AI 助手</span></div>
+  </div>
+
+  <div class="chat-messages" id="messages" x-ref="messages">
+    <template x-for="msg in messages" :key="msg.id || msg.tempId">
+      <div>
+        <div class="msg" :class="msg.role" x-text="msg.content"></div>
+        <template x-if="msg.ticket_id">
+          <div class="ticket-badge" x-text="'工单 #' + msg.ticket_id"></div>
+        </template>
+        <template x-if="msg.intent">
+          <div class="meta" style="padding-left:16px" x-text="'意图: ' + msg.intent + ' · 情绪: ' + msg.emotion"></div>
+        </template>
+      </div>
+    </template>
+    <div x-show="loading" class="msg assistant">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <form class="chat-input" @submit.prevent="sendMessage()">
+    <input type="text" x-model="input" placeholder="请输入您的问题..." :disabled="loading">
+    <button type="submit" :disabled="loading" x-text="loading ? '发送中...' : '发送'"></button>
+  </form>
+</div>
+
+<script>
+function chatApp() {
+  return {
+    input: '',
+    messages: [],
+    sessionId: '',
+    token: '',
+    loading: false,
+
+    async init() {
+      this.sessionId = localStorage.getItem('session_id');
+      if (!this.sessionId) {
+        this.sessionId = crypto.randomUUID();
+        localStorage.setItem('session_id', this.sessionId);
+      }
+      const resp = await fetch('/api/v1/auth/token');
+      const data = await resp.json();
+      this.token = data.access_token;
+    },
+
+    async sendMessage() {
+      if (!this.input.trim() || this.loading) return;
+      const content = this.input.trim();
+      this.input = '';
+      this.loading = true;
+
+      this.messages.push({ tempId: Date.now(), role: 'user', content });
+
+      try {
+        const resp = await fetch('/api/v1/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
+          body: JSON.stringify({ message: content, session_id: this.sessionId })
+        });
+        if (!resp.ok) throw new Error('请求失败');
+        const data = await resp.json();
+
+        this.messages.push({
+          id: data.message_id,
+          role: 'assistant',
+          content: data.ai_reply,
+          intent: data.intent,
+          emotion: data.emotion,
+          ticket_id: data.ticket_id,
+        });
+      } catch (e) {
+        this.messages.push({ tempId: Date.now(), role: 'assistant', content: '抱歉，系统繁忙，请稍后再试。' });
+      }
+
+      this.loading = false;
+      this.$nextTick(() => {
+        const el = this.$refs.messages;
+        el.scrollTop = el.scrollHeight;
+      });
+    }
+  }
+}
+</script>
+</body>
+</html>
