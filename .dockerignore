@@ -6,7 +6,7 @@ __pycache__
 !README.md
 .env
 data/
-models/text2vec-onnx/
+# models/text2vec-onnx/ is now pre-built and included in the image
 chroma/
 *.db
 venv/

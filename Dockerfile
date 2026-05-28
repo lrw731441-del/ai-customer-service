@@ -5,9 +5,10 @@ WORKDIR /app
 # Use HF mirror for faster model download in China
 ENV HF_ENDPOINT=https://hf-mirror.com
 
-# onnxruntime needs libgomp1
+# onnxruntime needs libgomp1; curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -18,8 +19,8 @@ COPY . .
 
 RUN mkdir -p data knowledge_base models/text2vec-onnx
 
-# Export ONNX model at build time (avoids runtime download, ~150MB vs 400MB PyTorch)
-RUN python export_onnx_model.py
+# Pre-built ONNX model is copied from build context (exported locally to avoid OOM on small servers)
+# If models/text2vec-onnx/model.onnx doesn't exist, app falls back to PyTorch at runtime
 
 EXPOSE 8000
 
