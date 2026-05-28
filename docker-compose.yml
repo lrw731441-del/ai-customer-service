@@ -1,11 +1,8 @@
 version: "3.8"
 
-# ============================================================
-# 部署说明：
-# 1. 服务器已有 nginx → 只启动 customer-service 容器
-# 2. 将 nginx.conf 中的 location / 等块加入现有 nginx 配置
-# 3. 现有 nginx 中 proxy_pass http://127.0.0.1:8000
-# ============================================================
+# 客服工单系统部署
+# 访问地址: http://1.14.143.27:8080
+# 管理后台: http://1.14.143.27:8080/static/login.html
 
 services:
   customer-service:
@@ -15,7 +12,7 @@ services:
     mem_limit: 512m
     memswap_limit: 1g
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8080:8000"
     volumes:
       - ./data:/app/data
       - ./knowledge_base:/app/knowledge_base
