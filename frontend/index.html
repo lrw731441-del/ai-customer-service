@@ -459,7 +459,10 @@ function chatApp() {
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + this.token },
           body: JSON.stringify({ message: content })
         });
-        if (!resp.ok) throw new Error('请求失败');
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.detail || '服务器错误 (' + resp.status + ')');
+        }
         const data = await resp.json();
 
         this.messages.push({
@@ -471,7 +474,10 @@ function chatApp() {
           await this.loadSessions();
         }
       } catch (e) {
-        this.messages.push({ tempId: Date.now(), role: 'assistant', content: '抱歉，系统繁忙，请稍后再试。' });
+        const errMsg = e.message === 'Failed to fetch'
+          ? '网络连接失败，请检查网络后刷新重试'
+          : e.message || '系统繁忙，请稍后再试';
+        this.messages.push({ tempId: Date.now(), role: 'assistant', content: errMsg });
       }
 
       this.loading = false;

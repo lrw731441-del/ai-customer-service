@@ -1,4 +1,6 @@
 import uuid
+import asyncio
+import logging
 from fastapi import APIRouter, Request, HTTPException, Depends
 from pydantic import BaseModel
 from sqlmodel import select
@@ -6,6 +8,8 @@ from sqlmodel import select
 from app.models.database import get_session, Message, Feedback, Ticket, Session_ as DBSession
 from app.services.chat_service import process_chat
 from app.dependencies import verify_session_token, verify_customer_token, verify_jwt_token, rate_limit
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["chat"])
 
@@ -33,15 +37,20 @@ async def chat(
     token: dict = Depends(verify_customer_token),
     _rate: None = Depends(rate_limit),
 ):
-    result = process_chat(
-        user_message=req.message,
-        session_id=token["session_id"],
-        customer_id=token["customer_id"],
-        ip_address=request.client.host if request.client else "unknown",
-        user_agent=request.headers.get("user-agent", ""),
-        db=db,
-    )
-    return ChatResponse(**result)
+    try:
+        result = await asyncio.to_thread(
+            process_chat,
+            user_message=req.message,
+            session_id=token["session_id"],
+            customer_id=token["customer_id"],
+            ip_address=request.client.host if request.client else "unknown",
+            user_agent=request.headers.get("user-agent", ""),
+            db=db,
+        )
+        return ChatResponse(**result)
+    except Exception as e:
+        logger.exception("聊天处理失败: %s", e)
+        raise HTTPException(status_code=500, detail=f"处理请求失败: {str(e)}")
 
 
 class TicketStatusResponse(BaseModel):
