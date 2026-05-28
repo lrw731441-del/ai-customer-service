@@ -1,5 +1,12 @@
 version: "3.8"
 
+# ============================================================
+# 部署说明：
+# 1. 服务器已有 nginx → 只启动 customer-service 容器
+# 2. 将 nginx.conf 中的 location / 等块加入现有 nginx 配置
+# 3. 现有 nginx 中 proxy_pass http://127.0.0.1:8000
+# ============================================================
+
 services:
   customer-service:
     build: .
@@ -15,27 +22,8 @@ services:
       - ./.env:/app/.env:ro
     environment:
       - HF_ENDPOINT=https://hf-mirror.com
-    networks:
-      - app-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-  nginx:
-    image: nginx:alpine
-    container_name: app-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - customer-service
-    networks:
-      - app-net
-
-networks:
-  app-net:
-    driver: bridge
