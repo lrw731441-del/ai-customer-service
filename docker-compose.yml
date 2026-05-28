@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  customer-service:
+    build: .
+    container_name: customer-service
+    restart: unless-stopped
+    mem_limit: 512m
+    memswap_limit: 1g
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./knowledge_base:/app/knowledge_base
+      - ./.env:/app/.env:ro
+    environment:
+      - HF_ENDPOINT=https://hf-mirror.com
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: app-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - customer-service
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge

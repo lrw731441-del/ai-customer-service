@@ -10,22 +10,33 @@ import os as _os
 _embedding_model = None
 _MODEL_NAME = "shibing624/text2vec-base-chinese"
 
+_ONNX_DIR = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))), "..", "models", "text2vec-onnx")
+_ONNX_DIR = _os.path.abspath(_ONNX_DIR)
+
 
 def _get_model():
     global _embedding_model
-    if _embedding_model is None:
-        # Try to resolve from local cache to avoid network calls
-        cache_dir = _os.path.expanduser(
-            "~/.cache/huggingface/hub/models--shibing624--text2vec-base-chinese/snapshots"
-        )
-        model_path = None
-        if _os.path.isdir(cache_dir):
-            snapshots = sorted(_os.listdir(cache_dir), reverse=True)
-            if snapshots:
-                model_path = _os.path.join(cache_dir, snapshots[0])
-        _embedding_model = SentenceTransformer(
-            model_path if model_path else _MODEL_NAME
-        )
+    if _embedding_model is not None:
+        return _embedding_model
+
+    # Prefer ONNX backend — uses ~60% less memory than PyTorch
+    onnx_model = _os.path.join(_ONNX_DIR, "model.onnx")
+    if _os.path.isfile(onnx_model):
+        _embedding_model = SentenceTransformer(_ONNX_DIR, backend="onnx")
+        return _embedding_model
+
+    # Fallback to PyTorch — local cache first, then download
+    cache_dir = _os.path.expanduser(
+        "~/.cache/huggingface/hub/models--shibing624--text2vec-base-chinese/snapshots"
+    )
+    model_path = None
+    if _os.path.isdir(cache_dir):
+        snapshots = sorted(_os.listdir(cache_dir), reverse=True)
+        if snapshots:
+            model_path = _os.path.join(cache_dir, snapshots[0])
+    _embedding_model = SentenceTransformer(
+        model_path if model_path else _MODEL_NAME
+    )
     return _embedding_model
 
 _chroma_client = chromadb.PersistentClient(

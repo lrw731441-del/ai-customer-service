@@ -2,3 +2,9 @@
 __pycache__/
 data/
 *.pyc
+models/text2vec-onnx/
+chroma/
+tmp/
+venv/
+.venv/
+*.egg-info/

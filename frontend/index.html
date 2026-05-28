@@ -157,7 +157,7 @@
           您可以在此咨询任何问题，AI 和人工客服将在此为您服务。
         </div>
       </div>
-      <button @click="logout()" style="margin:0 10px 14px;padding:9px 0;background:rgba(255,77,79,0.15);color:#ff6b6b;border:1px solid rgba(255,77,79,0.2);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.15s"
+      <button @click="logout()" style="margin: 5px 10px 14px;padding:12px 0;background:rgba(255,77,79,0.15);color:#ff6b6b;border:1px solid rgba(255,77,79,0.2);border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;transition:all 0.15s"
               @mouseenter="$el.style.background='rgba(255,77,79,0.25)'" @mouseleave="$el.style.background='rgba(255,77,79,0.15)'">退出登录</button>
     </div>
 
@@ -247,7 +247,7 @@
         <span>客服已回复处理结果，问题是否已解决？</span>
         <button @click="confirmTicketInDetail(currentTicket.id)" style="padding:4px 12px;background:#52c41a;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;white-space:nowrap">确认解决</button>
       </div>
-      <div class="td-input" x-show="currentTicket?.status !== 'closed' && currentTicket?.status !== 'resolved'">
+      <div class="td-input" x-show="currentTicket?.status !== 'closed'">
         <textarea x-model="ticketReplyInput" placeholder="输入追问内容..." rows="2" @keydown.enter.ctrl="sendTicketReply()"></textarea>
         <button @click="sendTicketReply()">发送</button>
       </div>

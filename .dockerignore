@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+.git
+.gitignore
+*.md
+!README.md
+.env
+data/
+models/text2vec-onnx/
+chroma/
+*.db
+venv/
+.venv/
+*.egg-info/
+.vscode/
+.idea/

@@ -93,7 +93,7 @@
     <table>
       <thead>
         <tr>
-          <th style="width:55px">ID</th><th>客户</th><th>意图</th><th>情绪</th><th>优先级</th><th>状态</th><th>AI 回复草稿</th><th style="width:195px">操作</th>
+          <th style="width:50px">ID</th><th style="width:90px">客户</th><th style="width:120px">意图</th><th style="width:75px">情绪</th><th style="width:75px">优先级</th><th style="width:120px">状态</th><th>AI 回复草稿</th><th style="width:230px">操作</th>
         </tr>
       </thead>
       <tbody>
@@ -112,7 +112,7 @@
               </span>
             </td>
             <td><span class="status-tag" :class="'status-' + t.status" x-text="statusLabel(t.status)"></span></td>
-            <td style="color:#aaa;font-size:13px" x-text="t.ai_reply_draft?.substring(0,60) || '-'"></td>
+            <td style="color:#aaa;font-size:13px" x-text="t.ai_reply_draft?.substring(0,100) || '-'"></td>
             <td>
               <button @click="openDetail(t)" style="margin-right:8px">详情</button>
               <button class="primary" @click="resolveTicket(t.id)" :disabled="t.status === 'resolved' || t.status === 'closed' || resolvingId === t.id" :style="{ minWidth: '76px', marginLeft: '8px', opacity: t.status === 'resolved' || t.status === 'closed' ? '0.5' : '1', cursor: t.status === 'resolved' || t.status === 'closed' ? 'not-allowed' : '' }" x-text="resolveBtnText(t)"></button>
