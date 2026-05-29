@@ -1,8 +1,6 @@
 version: "3.8"
 
 # 客服工单系统部署
-# 访问地址: http://1.14.143.27:8080
-# 管理后台: http://1.14.143.27:8080/static/login.html
 
 services:
   customer-service:

@@ -1,10 +1,12 @@
 import json
+import logging
 from typing import List, Dict, Any
 from openai import OpenAI
 
 from app.config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL
 from app.agent.prompts import INTENT_EMOTION_PROMPT, REPLY_ROUTING_PROMPT, FALLBACK_REPLY
 
+logger = logging.getLogger(__name__)
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
 
@@ -25,6 +27,7 @@ def detect_intent_and_emotion(state: Dict[str, Any]) -> Dict[str, Any]:
             "emotion": result.get("emotion", "平静"),
         }
     except Exception:
+        logger.exception("意图识别失败")
         return {"intent": "其他", "emotion": "平静"}
 
 
@@ -49,6 +52,7 @@ def rewrite_query(user_message: str) -> str:
         expanded = resp.choices[0].message.content.strip()
         return expanded if expanded else user_message
     except Exception:
+        logger.exception("查询重写失败")
         return user_message
 
 
@@ -101,7 +105,7 @@ def generate_reply_and_route(state: Dict[str, Any]) -> Dict[str, Any]:
             )
             reply = response.choices[0].message.content.strip()
         except Exception:
-            pass
+            logger.exception("愤怒/紧急用户回复生成失败")
 
         return {
             "ai_reply": reply,
@@ -127,6 +131,7 @@ def generate_reply_and_route(state: Dict[str, Any]) -> Dict[str, Any]:
         )
         reply = response.choices[0].message.content.strip()
     except Exception:
+        logger.exception("回复生成失败")
         reply = FALLBACK_REPLY
 
     # RAG 检索结果决定是否建工单

@@ -5,6 +5,11 @@ data/
 models/text2vec-onnx/
 chroma/
 tmp/
+.claude/
+docs/superpowers/
+findings.md
+progress.md
+task_plan.md
 venv/
 .venv/
 *.egg-info/
