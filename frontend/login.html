@@ -17,6 +17,10 @@
   button { width: 100%; padding: 10px; background: #1677ff; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
   button:hover { background: #4096ff; }
   .error { background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; padding: 10px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; }
+  @media (max-width: 480px) {
+    .login-card { padding: 28px 20px; }
+    .login-card h1 { font-size: 20px; }
+  }
 </style>
 </head>
 <body x-data="{ username: '', password: '', error: '', loading: false }">

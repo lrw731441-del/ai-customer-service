@@ -52,18 +52,45 @@
   .priority-dot.low { background: #8c8c8c; }
 
   .empty-state { text-align: center; color: #bbb; padding: 32px; font-size: 13px; }
+
+  .hamburger { display: none; background: none; border: none; font-size: 22px; cursor: pointer; color: #333; padding: 4px; line-height: 1; }
+  .sidebar-overlay { display: none; }
+  @media (max-width: 768px) {
+    .hamburger { display: block; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; height: 100%; z-index: 200;
+      width: 220px; transform: translateX(-100%); transition: transform 0.25s ease;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 199;
+      background: rgba(0,0,0,0.45);
+    }
+    .sidebar-overlay.open { display: block; }
+    .main { padding: 16px 12px; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 10px; }
+    .stat-card .value { font-size: 20px; }
+    .charts-row { grid-template-columns: 1fr; }
+    .table-box { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 600px; }
+  }
 </style>
 </head>
 <body x-data="dashboardApp()" x-init="checkAuth()">
 <div class="layout" x-show="authed">
-  <div class="sidebar">
+  <div class="sidebar-overlay" :class="{ open: sidebarOpen }" @click="sidebarOpen = false"></div>
+  <div class="sidebar" :class="{ open: sidebarOpen }">
     <h3>Globex 后台</h3>
-    <a href="/static/admin.html">工单审核</a>
-    <a href="#" class="active">数据看板</a>
+    <a href="/static/admin.html" @click="sidebarOpen=false">工单审核</a>
+    <a href="#" class="active" @click="sidebarOpen=false">数据看板</a>
     <a href="#" @click.prevent="logout()">退出登录</a>
   </div>
   <div class="main">
-    <h2 style="margin-bottom:18px;font-size:18px">数据看板</h2>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <button class="hamburger" @click="sidebarOpen = !sidebarOpen">☰</button>
+      <h2 style="font-size:18px;margin:0">数据看板</h2>
+    </div>
 
     <!-- 统计卡片 -->
     <div class="stats-grid">
@@ -141,7 +168,7 @@ let _charts = [];
 
 function dashboardApp() {
   return {
-    authed: false, token: '', stats: {},
+    authed: false, token: '', sidebarOpen: false, stats: {},
 
     statusLabel(s) {
       const map = { pending:'待处理', processing:'处理中', resolved:'已解决', closed:'已确认' };

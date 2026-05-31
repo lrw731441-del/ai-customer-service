@@ -68,19 +68,54 @@
   .modal-input textarea { min-height: 50px; flex: 1; }
   .modal-input .actions { display: flex; flex-direction: column; gap: 6px; }
   .empty-conv { text-align: center; color: #aaa; padding: 40px; font-size: 13px; }
+
+  /* ─── 响应式：手机端 ─── */
+  .hamburger { display: none; background: none; border: none; font-size: 22px; cursor: pointer; color: #333; padding: 4px; line-height: 1; }
+  .sidebar-overlay { display: none; }
+  @media (max-width: 768px) {
+    .hamburger { display: block; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; height: 100%; z-index: 200;
+      width: 220px; transform: translateX(-100%); transition: transform 0.25s ease;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 199;
+      background: rgba(0,0,0,0.45);
+    }
+    .sidebar-overlay.open { display: block; }
+    .main { padding: 16px 12px; }
+    .header { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+    .header h2 { font-size: 17px; }
+    .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { table-layout: auto; min-width: 700px; }
+    th, td { padding: 10px 8px; font-size: 12px; }
+    td { font-size: 13px; }
+    .modal-box { max-width: 98vw; max-height: 90vh; }
+    .modal-conversation { max-height: 250px; padding: 12px 14px; }
+    .modal-input { flex-direction: column; padding: 10px 14px; }
+    .modal-input .actions { flex-direction: row; }
+    .conv-item { max-width: 90%; font-size: 12px; }
+  }
 </style>
 </head>
 <body x-data="adminApp()" x-init="checkAuth()">
 <div class="layout" x-show="authed">
-  <div class="sidebar">
+  <!-- 侧边栏遮罩 (移动端) -->
+  <div class="sidebar-overlay" :class="{ open: sidebarOpen }" @click="sidebarOpen = false"></div>
+
+  <div class="sidebar" :class="{ open: sidebarOpen }">
     <h3>Globex 后台</h3>
-    <a href="#" class="active">工单审核</a>
-    <a href="/static/dashboard.html">数据看板</a>
+    <a href="#" class="active" @click="sidebarOpen=false">工单审核</a>
+    <a href="/static/dashboard.html" @click="sidebarOpen=false">数据看板</a>
     <a href="#" @click.prevent="logout()">退出登录</a>
   </div>
   <div class="main">
     <div class="header">
-      <h2>工单审核台</h2>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="hamburger" @click="sidebarOpen = !sidebarOpen">☰</button>
+        <h2>工单审核台</h2>
+      </div>
       <select x-model="statusFilter" @change="loadTickets()">
         <option value="">全部状态</option>
         <option value="pending">待处理</option>
@@ -177,6 +212,7 @@ function adminApp() {
     conversation: [],
     replyInput: '',
     token: '',
+    sidebarOpen: false,
 
     statusLabel(s) {
       const map = { pending: '待处理', processing: '处理中', resolved: '客服已解决', closed: '客户已确认' };
