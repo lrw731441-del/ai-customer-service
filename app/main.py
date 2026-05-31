@@ -27,6 +27,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import app.rag.vectordb as _vectordb  # 必须在 openai 之前加载，避免 ONNX/httpx 冲突
+
 from app.api import auth, chat, tickets, knowledge, dashboard
 
 app.include_router(auth.router)

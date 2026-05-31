@@ -1,11 +1,8 @@
 import uuid
 from typing import List, Dict
-import chromadb
-from sentence_transformers import SentenceTransformer
-
-from app.config import CHROMA_PERSIST_DIR
-
 import os as _os
+
+import numpy as np
 
 _embedding_model = None
 _MODEL_NAME = "shibing624/text2vec-base-chinese"
@@ -14,18 +11,13 @@ _ONNX_DIR = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__f
 _ONNX_DIR = _os.path.abspath(_ONNX_DIR)
 
 
-def _get_model():
-    global _embedding_model
-    if _embedding_model is not None:
-        return _embedding_model
+def _load_embedding_model():
+    from sentence_transformers import SentenceTransformer
 
-    # Prefer ONNX backend — uses ~60% less memory than PyTorch
     onnx_model = _os.path.join(_ONNX_DIR, "model.onnx")
     if _os.path.isfile(onnx_model):
-        _embedding_model = SentenceTransformer(_ONNX_DIR, backend="onnx")
-        return _embedding_model
+        return SentenceTransformer(_ONNX_DIR, backend="onnx")
 
-    # Fallback to PyTorch — local cache first, then download
     cache_dir = _os.path.expanduser(
         "~/.cache/huggingface/hub/models--shibing624--text2vec-base-chinese/snapshots"
     )
@@ -34,28 +26,39 @@ def _get_model():
         snapshots = sorted(_os.listdir(cache_dir), reverse=True)
         if snapshots:
             model_path = _os.path.join(cache_dir, snapshots[0])
-    _embedding_model = SentenceTransformer(
-        model_path if model_path else _MODEL_NAME
-    )
-    return _embedding_model
+    return SentenceTransformer(model_path if model_path else _MODEL_NAME)
 
-_chroma_client = chromadb.PersistentClient(
-    path=CHROMA_PERSIST_DIR,
-    settings=chromadb.Settings(anonymized_telemetry=False),
-)
+
+_embedding_model = _load_embedding_model()
+
+
+_chroma_client = None
+
+
+def _get_client():
+    global _chroma_client
+    if _chroma_client is not None:
+        return _chroma_client
+    import chromadb
+    from app.config import CHROMA_PERSIST_DIR
+    _chroma_client = chromadb.PersistentClient(
+        path=CHROMA_PERSIST_DIR,
+        settings=chromadb.Settings(anonymized_telemetry=False),
+    )
+    return _chroma_client
+
 
 COLLECTION_NAME = "globex_knowledge"
 
 
 def get_collection():
     """获取或创建知识库集合"""
-    return _chroma_client.get_or_create_collection(name=COLLECTION_NAME)
+    return _get_client().get_or_create_collection(name=COLLECTION_NAME)
 
 
 def embed_text(text: str) -> List[float]:
     """本地向量化（L2 归一化）"""
-    import numpy as np
-    vec = _get_model().encode(text)
+    vec = _embedding_model.encode(text)
     vec = vec / np.linalg.norm(vec)
     return vec.tolist()
 
@@ -100,7 +103,7 @@ def search_similar(query: str, top_k: int = 5) -> List[Dict[str, str]]:
 def delete_collection():
     """删除知识库集合（用于重新上传）"""
     try:
-        _chroma_client.delete_collection(name=COLLECTION_NAME)
+        _get_client().delete_collection(name=COLLECTION_NAME)
     except Exception:
         pass
 
